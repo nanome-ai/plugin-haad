@@ -14,18 +14,8 @@ BASE_DIR = os.path.join(os.path.dirname(__file__))
 class HAADPlugin(nanome.AsyncPluginInstance):
 
     def start(self):
-        self.menu = Menu()
-        self.menu.title = 'HAAD Plugin'
-        self.menu.width = 1
-        self.menu.height = 1
-
         self.temp_dir = tempfile.TemporaryDirectory()
         self.input_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdb', dir=self.temp_dir.name)
-
-        msg = 'Hello Nanome!'
-        node = self.menu.root.create_child_node()
-        self.label = node.add_new_label(msg)
-        Logs.message(msg)
 
     @async_callback
     async def on_run(self):
@@ -77,6 +67,7 @@ class HAADPlugin(nanome.AsyncPluginInstance):
             h_atom = atoms[id]
             h_atom.symbol = "H"
             
+            #Need to find the atom bonded to this hydrogen
             bonded_atom, dist = self.get_closest_heavy_atom_in_residue(result_complex, h_atom)
 
             if not bonded_atom:
@@ -84,7 +75,6 @@ class HAADPlugin(nanome.AsyncPluginInstance):
             
             if dist > 2.0:
                 continue
-
 
             bond = self.add_bond(h_atom, bonded_atom)
 
@@ -184,6 +174,7 @@ async def call_HAAD(pdb_path):
 
     return (hydrogenated, new_hydrogens)
 
+#Haad does not write chain and element
 def fix_haad_chains(path):
     id = 0
     with open(path) as f:
@@ -207,12 +198,9 @@ def fix_haad_chains(path):
     with open(path, "w") as f:
         for l in output_lines:
             f.write(l)
-    
-    print(path)
-
 
 def main():
-    plugin = nanome.Plugin('HAAD Plugin', 'Hydrogenation plugin using HAAD', 'other', False)
+    plugin = nanome.Plugin('HAAD hydrogenation', 'Hydrogenation plugin using HAAD', 'Hydrogens', False)
     plugin.set_plugin_class(HAADPlugin)
     plugin.run()
 
